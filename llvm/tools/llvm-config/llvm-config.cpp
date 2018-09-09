@@ -359,7 +359,7 @@ int main(int argc, char **argv) {
   } else {
     ActivePrefix = CurrentExecPrefix;
 #ifdef __HAIKU__
-    ActiveIncludeDir = ActivePrefix + "/develop/headers";
+    ActiveIncludeDir = ActivePrefix + "/develop/headers" + LLVM_LIBDIR_SUFFIX;
     ActiveLibDir = ActivePrefix + "/develop/lib" + LLVM_LIBDIR_SUFFIX;
 #else
     ActiveIncludeDir = ActivePrefix + "/include";
@@ -594,6 +594,7 @@ int main(int argc, char **argv) {
             OS << ActivePrefix << '\n';
           } else if (Arg == "--src-root") {
             OS << LLVM_SRC_ROOT << '\n';
+          }
         } else {
           llvm::errs() << "llvm-config: sources not installed\n";
           exit(1);
