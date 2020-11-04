@@ -1788,7 +1788,15 @@ struct FormatStyle {
     ///        initializer1(),
     ///        initializer2()
     /// \endcode
-    BCIS_AfterColon
+    BCIS_AfterColon,
+    /// Break constructor initializers before/after the colon and after commas.
+    /// \code
+    /// Constructor()
+    ///     :
+    ///     initializer1(),
+    ///     initializer2()
+    /// \endcode
+    BCIS_Haiku
   };
 
   /// The constructor initializers style to use.
@@ -3594,6 +3602,10 @@ FormatStyle getGNUStyle();
 /// Returns a format style complying with Microsoft style guide:
 /// https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference?view=vs-2017
 FormatStyle getMicrosoftStyle(FormatStyle::LanguageKind Language);
+
+/// Returns a format style complying with Haiku coding guidelines:
+/// https://www.haiku-os.org/development/coding-guidelines
+FormatStyle getHaikuStyle();
 
 /// Returns style indicating formatting should be not applied at all.
 FormatStyle getNoStyle();

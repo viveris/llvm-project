@@ -88,7 +88,7 @@ namespace LLVM.ClangFormat
         [Category("Format Options")]
         [DisplayName("Style")]
         [Description("Coding style, currently supports:\n" +
-                     "  - Predefined styles ('LLVM', 'Google', 'Chromium', 'Mozilla', 'WebKit').\n" +
+                     "  - Predefined styles ('LLVM', 'Google', 'Chromium', 'Mozilla', 'WebKit', 'Haiku').\n" +
                      "  - 'file' to search for a YAML .clang-format or _clang-format\n" +
                      "    configuration file.\n" +
                      "  - A YAML configuration snippet.\n\n" +

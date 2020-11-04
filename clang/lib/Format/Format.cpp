@@ -250,6 +250,7 @@ struct ScalarEnumerationTraits<FormatStyle::BreakConstructorInitializersStyle> {
     IO.enumCase(Value, "BeforeColon", FormatStyle::BCIS_BeforeColon);
     IO.enumCase(Value, "BeforeComma", FormatStyle::BCIS_BeforeComma);
     IO.enumCase(Value, "AfterColon", FormatStyle::BCIS_AfterColon);
+    IO.enumCase(Value, "Haiku", FormatStyle::BCIS_Haiku);
   }
 };
 
@@ -1435,6 +1436,43 @@ FormatStyle getMicrosoftStyle(FormatStyle::LanguageKind Language) {
   return Style;
 }
 
+FormatStyle getHaikuStyle() {
+  FormatStyle Style = getLLVMStyle();
+Style.AccessModifierOffset = -4;
+  Style.AlignEscapedNewlines = FormatStyle::ENAS_DontAlign;
+  Style.AlignAfterOpenBracket = FormatStyle::BAS_DontAlign;
+  Style.AlignOperands = FormatStyle::OAS_DontAlign;
+  Style.AlignTrailingComments = false;
+  Style.AllowAllParametersOfDeclarationOnNextLine = false;
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_InlineOnly;
+  Style.AlwaysBreakAfterReturnType = FormatStyle::RTBS_TopLevelDefinitions;
+  Style.AlwaysBreakAfterDefinitionReturnType = FormatStyle::DRTBS_TopLevel;
+  Style.BreakBeforeBinaryOperators = FormatStyle::BOS_All;
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.AfterCaseLabel = true;
+  Style.BraceWrapping.AfterClass = true;
+  Style.BraceWrapping.AfterControlStatement = FormatStyle::BWACS_Never;
+  Style.BraceWrapping.AfterEnum = true;
+  Style.BraceWrapping.AfterFunction = true;
+  Style.BraceWrapping.AfterStruct = true;
+  Style.BraceWrapping.AfterUnion = true;
+  Style.BraceWrapping.AfterExternBlock = true;
+  Style.BraceWrapping.BeforeCatch = false;
+  Style.BraceWrapping.BeforeElse = false;
+  Style.BraceWrapping.BeforeWhile = false;
+  Style.BreakConstructorInitializers = FormatStyle::BCIS_Haiku;
+  Style.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
+  Style.IndentCaseLabels = true;
+  Style.IndentWidth = 4;
+  Style.TabWidth = 4;
+  Style.MaxEmptyLinesToKeep = 2;
+  Style.PointerAlignment = FormatStyle::PAS_Left;
+  Style.UseTab = FormatStyle::UT_Always;
+  Style.SpaceAfterCStyleCast = false;
+  Style.SpaceAfterTemplateKeyword = false;
+  return Style;
+}
+
 FormatStyle getNoStyle() {
   FormatStyle NoStyle = getLLVMStyle();
   NoStyle.DisableFormat = true;
@@ -1461,6 +1499,8 @@ bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
     *Style = getMicrosoftStyle(Language);
   } else if (Name.equals_insensitive("none")) {
     *Style = getNoStyle();
+  } else if (Name.equals_insensitive("haiku")) {
+    *Style = getHaikuStyle();
   } else if (Name.equals_insensitive("inheritparentconfig")) {
     Style->InheritsParentConfig = true;
   } else {
@@ -1577,6 +1617,34 @@ FormatStyle::GetLanguageStyle(FormatStyle::LanguageKind Language) const {
 }
 
 namespace {
+
+class RedundantBracketsRemover : public TokenAnalyzer {
+public:
+  RedundantBracketsRemover(const Environment &Env, const FormatStyle &Style)
+      : TokenAnalyzer(Env, Style) {}
+
+  std::pair<tooling::Replacements, unsigned>
+  analyze(TokenAnnotator &Annotator,
+          SmallVectorImpl<AnnotatedLine *> &AnnotatedLines,
+          FormatTokenLexer &Tokens) override {
+    AffectedRangeMgr.computeAffectedLines(AnnotatedLines);
+    const SourceManager &SourceMgr = Env.getSourceManager();
+    tooling::Replacements Result;
+    for (auto &Line : AnnotatedLines) {
+      if (Line->Affected)
+        for (FormatToken *Token = Line->First; Token; Token = Token->Next)
+          if (Token->IsRedundant) {
+            auto Err = Result.add(tooling::Replacement(
+                SourceMgr, Token->Tok.getLocation(), 2, ""));
+            if (Err) {
+              llvm::errs() << llvm::toString(std::move(Err)) << "\n";
+              assert(false);
+            }
+          }
+    }
+    return {Result, 0};
+  }
+};
 
 class JavaScriptRequoter : public TokenAnalyzer {
 public:
@@ -2851,7 +2919,11 @@ reformat(const FormatStyle &Style, StringRef Code,
   typedef std::function<std::pair<tooling::Replacements, unsigned>(
       const Environment &)>
       AnalyzerPass;
-  SmallVector<AnalyzerPass, 4> Passes;
+  SmallVector<AnalyzerPass, 5> Passes;
+
+  Passes.emplace_back([&](const Environment &Env) {
+    return RedundantBracketsRemover(Env, Expanded).process();
+  });
 
   if (Style.Language == FormatStyle::LK_Cpp) {
     if (Style.FixNamespaceComments)
@@ -2984,7 +3056,7 @@ LangOptions getFormattingLangOpts(const FormatStyle &Style) {
 
 const char *StyleOptionHelpDescription =
     "Coding style, currently supports:\n"
-    "  LLVM, GNU, Google, Chromium, Microsoft, Mozilla, WebKit.\n"
+    "  LLVM, GNU, Google, Chromium, Microsoft, Mozilla, WebKit, Haiku.\n"
     "Use -style=file to load style configuration from\n"
     ".clang-format file located in one of the parent\n"
     "directories of the source file (or current\n"

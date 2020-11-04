@@ -1228,9 +1228,9 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     //       ^ line up here.
     State.Stack.back().Indent =
         State.Column +
-        (Style.BreakConstructorInitializers == FormatStyle::BCIS_BeforeComma
-             ? 0
-             : 2);
+        (Style.BreakConstructorInitializers == FormatStyle::BCIS_BeforeColon
+             ? 2
+             : 0);
     State.Stack.back().NestedBlockIndent = State.Stack.back().Indent;
     if (Style.ConstructorInitializerAllOnOneLineOrOnePerLine) {
       State.Stack.back().AvoidBinPacking = true;

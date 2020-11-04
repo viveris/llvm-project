@@ -77,7 +77,7 @@ to format C/C++/Java/JavaScript/JSON/Objective-C/Protobuf/C# code.
     --sort-includes            - If set, overrides the include sorting behavior
                                  determined by the SortIncludes style flag
     --style=<string>           - Coding style, currently supports:
-                                   LLVM, Google, Chromium, Mozilla, WebKit.
+                                   LLVM, Google, Chromium, Mozilla, WebKit, Haiku.
                                  Use -style=file to load style configuration from
                                  .clang-format file located in one of the parent
                                  directories of the source file (or current
