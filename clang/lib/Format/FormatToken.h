@@ -201,6 +201,8 @@ struct FormatToken {
   /// Contains the kind of block if this token is a brace.
   BraceBlockKind BlockKind = BK_Unknown;
 
+  bool IsRedundant = false;
+
   /// Returns the token's type, e.g. whether "<" is a template opener or
   /// binary operator.
   TokenType getType() const { return Type; }

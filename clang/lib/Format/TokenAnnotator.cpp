@@ -2296,6 +2296,15 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
 
   Line.First->SpacesRequiredBefore = 1;
   Line.First->CanBreakBefore = Line.First->MustBreakBefore;
+
+  static bool Comment = false;
+  if (Line.First->is(tok::comment))
+    Comment = true;
+  else if (Comment)
+    Comment = false;
+  else if (Line.Level == 0 && !Line.First->IsFirst &&
+           Line.MightBeFunctionDecl && Line.mightBeFunctionDefinition())
+    Line.First->NewlinesBefore = 3;
 }
 
 // This function heuristically determines whether 'Current' starts the name of a
@@ -3528,6 +3537,11 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
       Right.Previous->MatchingParen->NestingLevel == 0 &&
       Style.AlwaysBreakTemplateDeclarations == FormatStyle::BTDS_Yes)
     return true;
+  if (Style.BreakConstructorInitializers == FormatStyle::BCIS_Haiku &&
+      Left.NestingLevel == 0 && Line.Level == 0 &&
+      Style.AllowShortFunctionsOnASingleLine & FormatStyle::SFS_InlineOnly &&
+      Left.isOneOf(TT_CtorInitializerColon, TT_CtorInitializerComma))
+    return true;
   if (Right.is(TT_CtorInitializerComma) &&
       Style.BreakConstructorInitializers == FormatStyle::BCIS_BeforeComma &&
       !Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
@@ -3555,6 +3569,12 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
   }
   if (Right.is(TT_InlineASMBrace))
     return Right.HasUnescapedNewline;
+  if (Right.is(tok::l_brace) && Right.BlockKind == BK_Block &&
+      Line.First->isOneOf(tok::kw_case, tok::kw_default)) {
+    FormatToken *Prev = Right.getPreviousNonComment();
+    if (Prev && Prev->is(tok::colon))
+      return Style.BraceWrapping.AfterCaseLabel;
+  }
 
   auto ShortLambdaOption = Style.AllowShortLambdasOnASingleLine;
   if (Style.BraceWrapping.BeforeLambdaBody &&
