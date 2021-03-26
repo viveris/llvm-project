@@ -2958,7 +2958,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
         Left.is(TT_ForEachMacro))
       return false;
 
-    if(Style.BreakConstructorInitializers == FormatStyle::BCIS_Haiku){
+    if(Style.SpaceBeforeParens  ==  FormatStyle::SBPO_Haiku){
         return Line.Type == LT_ObjCDecl || Left.is(tok::semi) ||
            (Style.SpaceBeforeParens != FormatStyle::SBPO_Never &&
             (Left.isOneOf(tok::pp_elif, tok::kw_for, tok::kw_while,

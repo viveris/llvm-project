@@ -2126,7 +2126,15 @@ struct FormatStyle {
     ///      }
     ///    }
     /// \endcode
-    SBPO_Always
+    SBPO_Always,
+    /// Same as ``SBPO_ControlStatements`` except this option doesn't apply to
+    /// new keyword.
+    /// \code
+    ///    void f() {
+    ///      new(std::nothrow)
+    ///    }
+    /// \endcode
+    SBPO_Haiku
   };
 
   /// Defines in which cases to put a space before opening parentheses.

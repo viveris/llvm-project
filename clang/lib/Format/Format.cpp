@@ -1279,6 +1279,8 @@ Style.AccessModifierOffset = -4;
   Style.UseTab = FormatStyle::UT_Always;
   Style.SpaceAfterCStyleCast = false;
   Style.SpaceAfterTemplateKeyword = false;
+  Style.SpaceBeforeParens = FormatStyle::SBPO_Haiku;
+
   return Style;
 }
 
