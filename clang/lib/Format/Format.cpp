@@ -360,6 +360,7 @@ struct ScalarEnumerationTraits<FormatStyle::SpaceBeforeParensOptions> {
     IO.enumCase(Value, "NonEmptyParentheses",
                 FormatStyle::SBPO_NonEmptyParentheses);
     IO.enumCase(Value, "Always", FormatStyle::SBPO_Always);
+    IO.enumCase(Value, "Haiku", FormatStyle::SBPO_Haiku);
 
     // For backward compatibility.
     IO.enumCase(Value, "false", FormatStyle::SBPO_Never);
@@ -1279,6 +1280,8 @@ Style.AccessModifierOffset = -4;
   Style.UseTab = FormatStyle::UT_Always;
   Style.SpaceAfterCStyleCast = false;
   Style.SpaceAfterTemplateKeyword = false;
+  Style.SpaceBeforeParens = FormatStyle::SBPO_Haiku;
+
   return Style;
 }
 
