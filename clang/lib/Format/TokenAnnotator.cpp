@@ -3140,7 +3140,27 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
             FormatStyle::SBPO_ControlStatementsExceptControlMacros &&
         Left.is(TT_IfMacro))
       return false;
-    return Line.Type == LT_ObjCDecl || Left.is(tok::semi) ||
+
+    if(Style.SpaceBeforeParens  ==  FormatStyle::SBPO_Haiku){
+        return Line.Type == LT_ObjCDecl || Left.is(tok::semi) ||
+           (Style.SpaceBeforeParens != FormatStyle::SBPO_Never &&
+            (Left.isOneOf(tok::pp_elif, tok::kw_for, tok::kw_while,
+                          tok::kw_switch, tok::kw_case, TT_ForEachMacro,
+                          TT_ObjCForIn) ||
+             Left.isIf(Line.Type != LT_PreprocessorDirective) ||
+             (Left.isOneOf(tok::kw_try, Keywords.kw___except, tok::kw_catch,
+                          tok::kw_delete) &&
+              (!Left.Previous || Left.Previous->isNot(tok::period))))) ||
+           (spaceRequiredBeforeParens(Right) &&
+            (Left.is(tok::identifier) || Left.isFunctionLikeKeyword() ||
+             Left.is(tok::r_paren) || Left.isSimpleTypeSpecifier() ||
+             (Left.is(tok::r_square) && Left.MatchingParen &&
+              Left.MatchingParen->is(TT_LambdaLSquare))) &&
+            Line.Type != LT_PreprocessorDirective);
+
+      }
+      else{
+        return Line.Type == LT_ObjCDecl || Left.is(tok::semi) ||
            (Style.SpaceBeforeParens != FormatStyle::SBPO_Never &&
             (Left.isOneOf(tok::pp_elif, tok::kw_for, tok::kw_while,
                           tok::kw_switch, tok::kw_case, TT_ForEachMacro,
@@ -3155,6 +3175,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
              (Left.is(tok::r_square) && Left.MatchingParen &&
               Left.MatchingParen->is(TT_LambdaLSquare))) &&
             Line.Type != LT_PreprocessorDirective);
+
+      }
+    
   }
   if (Left.is(tok::at) && Right.Tok.getObjCKeywordID() != tok::objc_not_keyword)
     return false;
