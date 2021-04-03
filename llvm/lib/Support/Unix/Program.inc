@@ -455,6 +455,8 @@ ProcessInfo llvm::sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
     uint64_t PeakMemory = 0;
 #ifndef __HAIKU__
     PeakMemory = static_cast<uint64_t>(Info.ru_maxrss);
+#else
+    PeakMemory = 0;
 #endif
     *ProcStat = ProcessStatistics{UserT + KernelT, UserT, PeakMemory};
   }
