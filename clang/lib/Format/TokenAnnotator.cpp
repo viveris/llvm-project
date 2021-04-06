@@ -3561,8 +3561,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
       Style.AlwaysBreakTemplateDeclarations == FormatStyle::BTDS_Yes)
     return true;
   if (Style.BreakConstructorInitializers == FormatStyle::BCIS_Haiku &&
-      Left.NestingLevel == 0 && Line.Level == 0 &&
-      Style.AllowShortFunctionsOnASingleLine & FormatStyle::SFS_InlineOnly &&
+      Style.AllowShortFunctionsOnASingleLine & FormatStyle::SFS_Empty &&
       Left.isOneOf(TT_CtorInitializerColon, TT_CtorInitializerComma))
     return true;
   if (Right.is(TT_CtorInitializerComma) &&
