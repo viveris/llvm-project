@@ -1142,6 +1142,7 @@ unsigned UnwrappedLineFormatter::format(
   unsigned RangeMinLevel = UINT_MAX;
 
   bool FirstLine = true;
+  unsigned previousIndentLevel = 0;
   for (const AnnotatedLine *Line =
            Joiner.getNextMergedLine(DryRun, IndentTracker);
        Line; Line = NextLine, FirstLine = false) {
@@ -1170,7 +1171,19 @@ unsigned UnwrappedLineFormatter::format(
           SourceMgr.getSpellingLineNumber(TheLine.First->Tok.getLocation());
     }
 
-    if (ShouldFormat && TheLine.Type != LT_Invalid) {
+    // Below is the code to get the info of previous non comment line
+    // FormatToken *previousNonComment = TheLine.First->getPreviousNonComment();
+    bool shouldFormatComment = true;
+
+    if (TheLine.First->is(tok::comment) && !FirstLine) {
+      // According to haiku guidelines tab width is 4 hence adding 4
+      // And checking it against the OrignalColumn
+      if (previousIndentLevel + 4 == TheLine.First->OriginalColumn) {
+        shouldFormatComment = false;
+      }
+    }
+
+    if (ShouldFormat && TheLine.Type != LT_Invalid && shouldFormatComment) {
       if (!DryRun) {
         bool LastLine = Line->First->is(tok::eof);
         formatFirstToken(TheLine, PreviousLine, PrevPrevLine, Lines, Indent,
@@ -1211,8 +1224,12 @@ unsigned UnwrappedLineFormatter::format(
       // unless the current \c AnnotatedLine is not at the beginning of a line.
       bool StartsNewLine =
           TheLine.First->NewlinesBefore > 0 || TheLine.First->IsFirst;
-      if (StartsNewLine)
+      if (StartsNewLine && shouldFormatComment)
         IndentTracker.adjustToUnmodifiedLine(TheLine);
+
+      if (StartsNewLine && !shouldFormatComment)
+        IndentTracker.skipLine(TheLine);
+
       if (!DryRun) {
         bool ReformatLeadingWhitespace =
             StartsNewLine && ((PreviousLine && PreviousLine->Affected) ||
@@ -1237,6 +1254,8 @@ unsigned UnwrappedLineFormatter::format(
       markFinalized(TheLine.First);
     PrevPrevLine = PreviousLine;
     PreviousLine = &TheLine;
+
+    previousIndentLevel = Indent; // TheLine.Level;
   }
   PenaltyCache[CacheKey] = Penalty;
   return Penalty;
