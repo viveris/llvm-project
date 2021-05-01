@@ -719,6 +719,33 @@ struct FormatStyle {
   /// Dependent on the value, ``if (a) return;`` can be put on a single line.
   ShortIfStyle AllowShortIfStatementsOnASingleLine;
 
+  // Allow comments to indent one level more
+  enum IndentComment {
+    /// Keep the indent as it is
+    /// \code
+    ///   if (a)
+    ///     return ;
+    ///       // Comment to remain as it is
+    ///   else {
+    ///     return;
+    ///   }
+    /// \endcode
+    IC_True,
+     /// Indent the comment as previous line indent
+    /// \code
+    ///   if (a)
+    ///     return ;
+    ///     // Comment to remain as it is
+    ///   else {
+    ///     return;
+    ///   }
+    /// \endcode
+    IC_False
+  };
+
+  /// If ``true``, comments indent can be one level more
+  IndentComment AllowCommentsToIndentOneLevelMore;
+
   /// Different styles for merging short lambdas containing at most one
   /// statement.
   enum ShortLambdaStyle : unsigned char {

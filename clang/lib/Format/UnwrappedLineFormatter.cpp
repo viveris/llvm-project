@@ -1175,7 +1175,7 @@ unsigned UnwrappedLineFormatter::format(
     // FormatToken *previousNonComment = TheLine.First->getPreviousNonComment();
     bool shouldFormatComment = true;
 
-    if (TheLine.First->is(tok::comment) && !FirstLine) {
+    if (TheLine.First->is(tok::comment) && !FirstLine &&  Style.AllowCommentsToIndentOneLevelMore == FormatStyle::IC_True) {
       // According to haiku guidelines tab width is 4 hence adding 4
       // And checking it against the OrignalColumn
       if (previousIndentLevel + 4 == TheLine.First->OriginalColumn) {

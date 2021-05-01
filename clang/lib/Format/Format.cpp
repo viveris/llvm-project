@@ -177,6 +177,13 @@ template <> struct ScalarEnumerationTraits<FormatStyle::ShortIfStyle> {
   }
 };
 
+template <> struct ScalarEnumerationTraits<FormatStyle::IndentComment> {
+  static void enumeration(IO &IO, FormatStyle::IndentComment &Value) {
+    IO.enumCase(Value, "true", FormatStyle::IC_True);
+    IO.enumCase(Value, "false", FormatStyle::IC_False);
+  }
+};
+
 template <> struct ScalarEnumerationTraits<FormatStyle::ShortLambdaStyle> {
   static void enumeration(IO &IO, FormatStyle::ShortLambdaStyle &Value) {
     IO.enumCase(Value, "None", FormatStyle::SLS_None);
@@ -566,6 +573,8 @@ template <> struct MappingTraits<FormatStyle> {
                    Style.AllowShortCaseLabelsOnASingleLine);
     IO.mapOptional("AllowShortFunctionsOnASingleLine",
                    Style.AllowShortFunctionsOnASingleLine);
+    IO.mapOptional("AllowCommentsToIndentOneLevelMore",
+                   Style.AllowCommentsToIndentOneLevelMore);
     IO.mapOptional("AllowShortLambdasOnASingleLine",
                    Style.AllowShortLambdasOnASingleLine);
     IO.mapOptional("AllowShortIfStatementsOnASingleLine",
@@ -1476,6 +1485,7 @@ Style.AccessModifierOffset = -4;
   Style.SpaceAfterCStyleCast = false;
   Style.SpaceAfterTemplateKeyword = false;
   Style.SpaceBeforeParens = FormatStyle::SBPO_Haiku;
+  Style.AllowCommentsToIndentOneLevelMore = FormatStyle::IC_True;
 
   return Style;
 }
