@@ -1,0 +1,28 @@
+llvm and clang-format for Haiku
+===============================
+
+This repository contains a version of llvm/clang modified with:
+- Patches to be able to compile on Haiku (from HaikuPorts)
+- Patches to adjust clang-format to our needs (from Owen Pan and Saloni Goayal)
+
+Compiling
+=========
+
+To build clang-format:
+
+```
+mkdir build
+cd build
+cmake .. -GNinja -DLLVM_ENABLE_PROJECTS=clang
+ninja clang-format
+```
+
+Testing clang-format
+====================
+
+This will make an in-place modification to the file foo.cpp:
+
+    ./build/bin/clang-format -style haiku -i foo.cpp
+
+Then you can check the results with "git diff" if the file was previously
+versionned.
