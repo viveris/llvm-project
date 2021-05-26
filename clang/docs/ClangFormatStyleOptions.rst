@@ -2739,6 +2739,45 @@ the configuration (without a prefix: ``Auto``).
      LoooooooooooooooooooooooooooooooooooooooongReturnType
      LoooooooooooooooooooooooooooooooongFunctionDeclaration();
 
+**InsertBraces** (``BraceInsertionStyle``)
+  The brace insertion style to use for control flow statements.
+
+  Possible values:
+
+  * ``BIS_Never`` (in configuration: ``Never``)
+    Does not insert braces.
+
+    .. code-block:: c++
+
+       if (condition)
+         funtion_call(arg1, arg2);
+
+  * ``BIS_Always`` (in configuration: ``Always``)
+    Always insert braces.
+
+    .. code-block:: c++
+
+       if (condition) {
+       //             ^ inserted
+         funtion_call(arg1, arg2);
+       } // < inserted
+
+  * ``BIS_WrapLikely`` (in configuration: ``WrapLikely``)
+    Insert braces if wrapping is likely
+
+    .. code-block:: c++
+    
+       if (condition) {
+         short_line(arg1, arg2);
+       }
+
+       if (condition) {
+       //             ^ inserted
+         very_very_long_line(
+           arg1, arg2, arg3);
+       } // < inserted
+
+
 **InsertTrailingCommas** (``TrailingCommaStyle``)
   If set to ``TCS_Wrapped`` will insert trailing commas in container
   literals (arrays and objects) that wrap across multiple lines.

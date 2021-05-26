@@ -44,6 +44,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include<iostream>
 
 #define DEBUG_TYPE "format-formatter"
 
@@ -209,6 +210,15 @@ template <> struct ScalarEnumerationTraits<FormatStyle::TrailingCommaStyle> {
     IO.enumCase(Value, "Wrapped", FormatStyle::TCS_Wrapped);
   }
 };
+
+template <> struct ScalarEnumerationTraits<FormatStyle::BraceInsertionStyle> {
+  static void enumeration(IO &IO, FormatStyle::BraceInsertionStyle &Value) {
+    IO.enumCase(Value, "Never", FormatStyle::BIS_Never);
+    IO.enumCase(Value, "Always", FormatStyle::BIS_Always);
+    IO.enumCase(Value, "WrapLikely", FormatStyle::BIS_WrapLikely);
+  }
+};
+
 
 template <> struct ScalarEnumerationTraits<FormatStyle::BinaryOperatorStyle> {
   static void enumeration(IO &IO, FormatStyle::BinaryOperatorStyle &Value) {
@@ -678,6 +688,7 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("IndentWidth", Style.IndentWidth);
     IO.mapOptional("IndentWrappedFunctionNames",
                    Style.IndentWrappedFunctionNames);
+    IO.mapOptional("InsertBraces", Style.InsertBraces);  
     IO.mapOptional("InsertTrailingCommas", Style.InsertTrailingCommas);
     IO.mapOptional("JavaImportGroups", Style.JavaImportGroups);
     IO.mapOptional("JavaScriptQuotes", Style.JavaScriptQuotes);
@@ -1074,6 +1085,7 @@ FormatStyle getLLVMStyle(FormatStyle::LanguageKind Language) {
   LLVMStyle.IndentWrappedFunctionNames = false;
   LLVMStyle.IndentWidth = 2;
   LLVMStyle.PPIndentWidth = -1;
+  LLVMStyle.InsertBraces = FormatStyle::BIS_Never;
   LLVMStyle.InsertTrailingCommas = FormatStyle::TCS_None;
   LLVMStyle.JavaScriptQuotes = FormatStyle::JSQS_Leave;
   LLVMStyle.JavaScriptWrapImports = true;
@@ -1478,6 +1490,7 @@ Style.AccessModifierOffset = -4;
   Style.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   Style.IndentCaseLabels = true;
   Style.IndentWidth = 4;
+  Style.InsertBraces = FormatStyle::BIS_Always;
   Style.TabWidth = 4;
   Style.MaxEmptyLinesToKeep = 2;
   Style.PointerAlignment = FormatStyle::PAS_Left;
@@ -1486,6 +1499,7 @@ Style.AccessModifierOffset = -4;
   Style.SpaceAfterTemplateKeyword = false;
   Style.SpaceBeforeParens = FormatStyle::SBPO_Haiku;
   Style.AllowCommentsToIndentOneLevelMore = FormatStyle::IC_True;
+  // Style.AlignConsecutiveDeclarations = true;
 
   return Style;
 }
@@ -1873,6 +1887,79 @@ private:
   bool BinPackInconclusiveFunctions;
   FormattingAttemptStatus *Status;
 };
+
+class BracesInserter : public TokenAnalyzer {
+public:
+  BracesInserter(const Environment &Env, const FormatStyle &Style)
+      : TokenAnalyzer(Env, Style) {}
+
+  std::pair<tooling::Replacements, unsigned>
+  analyze(TokenAnnotator &Annotator,
+          SmallVectorImpl<AnnotatedLine *> &AnnotatedLines,
+          FormatTokenLexer &Tokens) override {
+    tooling::Replacements Result;
+    if (AffectedRangeMgr.computeAffectedLines(AnnotatedLines))
+      insertBraces(AnnotatedLines, Result);
+    return {Result, 0};
+  }
+
+private:
+  void insertBraces(SmallVectorImpl<AnnotatedLine *> &Lines,
+                    tooling::Replacements &Result) {
+    bool InsideCtrlFlowStmt = false;
+    for (AnnotatedLine *Line : Lines) {
+      insertBraces(Line->Children, Result);
+
+      // Get first token that is not a comment.
+      const FormatToken *FirstTok = Line->First;
+      if (FirstTok->is(tok::comment))
+        FirstTok = FirstTok->getNextNonComment();
+      // The line is a comment.
+      if (!FirstTok)
+        continue;
+      // Get last token that is not a comment.
+      const FormatToken *LastTok = Line->Last;
+      if (LastTok->is(tok::comment))
+        LastTok = LastTok->getPreviousNonComment();
+
+      // If this token starts a control flow stmt, mark it.
+      if (FirstTok->isOneOf(tok::kw_if, tok::kw_else, tok::kw_for, tok::kw_do,
+                            tok::kw_while)) {
+        InsideCtrlFlowStmt = !LastTok->isOneOf(tok::l_brace, tok::semi);
+        continue;
+      }
+
+      // If the previous line started a ctrl flow block and this line does not
+      // start with curly.
+      if (Line->Affected && !FirstTok->Finalized && InsideCtrlFlowStmt &&
+          FirstTok->isNot(tok::l_brace)) {
+        const SourceLocation startBraceLoc = Line->First->Tok.getLocation();
+        // In some cases clang-format will run the same transform twice which
+        // could lead to adding the curlies twice, skip if we already added one
+        // at this location.
+
+        if (Done.count(startBraceLoc))
+          break;
+
+        if (Style.InsertBraces ==
+                FormatStyle::BIS_Always || Style.InsertBraces == FormatStyle::BIS_WrapLikely ||
+            Line->Last->OriginalColumn > Style.ColumnLimit) {
+          Done.insert(startBraceLoc);
+          cantFail(Result.add(tooling::Replacement(Env.getSourceManager(),
+                                                   startBraceLoc, 0, "{")));
+          cantFail(Result.add(tooling::Replacement(
+              Env.getSourceManager(),
+              Line->Last->Tok.getLocation().getLocWithOffset(
+                  Line->Last->TokenText.size()),
+              0, "\n}")));
+        }
+      }
+      InsideCtrlFlowStmt = false;
+    }
+  }
+  std::set<SourceLocation> Done;
+};
+    
 
 /// TrailingCommaInserter inserts trailing commas into container literals.
 /// E.g.:
@@ -2951,6 +3038,11 @@ reformat(const FormatStyle &Style, StringRef Code,
     if (Style.SortUsingDeclarations)
       Passes.emplace_back([&](const Environment &Env) {
         return UsingDeclarationsSorter(Env, Expanded).process();
+      });
+
+    if (Style.InsertBraces != FormatStyle::BIS_Never)
+      Passes.emplace_back([&](const Environment &Env) {
+        return BracesInserter(Env, Expanded).process();
       });
   }
 
