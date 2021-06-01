@@ -1490,7 +1490,7 @@ Style.AccessModifierOffset = -4;
   Style.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   Style.IndentCaseLabels = true;
   Style.IndentWidth = 4;
-  Style.InsertBraces = FormatStyle::BIS_Always;
+  Style.InsertBraces = FormatStyle::BIS_WrapLikely;
   Style.TabWidth = 4;
   Style.MaxEmptyLinesToKeep = 2;
   Style.PointerAlignment = FormatStyle::PAS_Left;
@@ -1909,12 +1909,11 @@ private:
         // In some cases clang-format will run the same transform twice which
         // could lead to adding the curlies twice, skip if we already added one
         // at this location.
-
         if (Done.count(startBraceLoc))
           break;
 
         if (Style.InsertBraces ==
-                FormatStyle::BIS_Always || Style.InsertBraces == FormatStyle::BIS_WrapLikely ||
+                FormatStyle::BIS_Always ||
             Line->Last->OriginalColumn > Style.ColumnLimit) {
           Done.insert(startBraceLoc);
           cantFail(Result.add(tooling::Replacement(Env.getSourceManager(),
@@ -1931,7 +1930,6 @@ private:
   }
   std::set<SourceLocation> Done;
 };
-    
 
 /// TrailingCommaInserter inserts trailing commas into container literals.
 /// E.g.:
