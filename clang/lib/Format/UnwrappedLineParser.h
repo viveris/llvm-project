@@ -97,13 +97,13 @@ private:
   void parsePPEndIf();
   void parsePPUnknown();
   void readTokenWithJavaScriptASI();
-  bool parseStructuralElement();
+  void parseStructuralElement();
   bool tryToParseBracedList();
   bool parseBracedList(bool ContinueOnSemicolons = false, bool IsEnum = false,
                        tok::TokenKind ClosingBraceKind = tok::r_brace);
   void parseParens();
   void parseSquare(bool LambdaIntroducer = false);
-  bool parseIfThenElse();
+  void parseIfThenElse();
   void parseTryCatch();
   void parseForOrWhileLoop();
   void parseDoWhile();
