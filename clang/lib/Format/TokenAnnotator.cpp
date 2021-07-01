@@ -2481,6 +2481,8 @@ static bool isFunctionDeclarationName(const FormatToken &Current,
     return true;
   if (Next->Next == Next->MatchingParen)
     return true; // Empty parentheses.
+  if (Next->is(tok::l_paren) && Next->Next->Next == Next->MatchingParen)
+    return true;
   // If there is an &/&& after the r_paren, this is likely a function.
   if (Next->MatchingParen->Next &&
       Next->MatchingParen->Next->is(TT_PointerOrReference))
