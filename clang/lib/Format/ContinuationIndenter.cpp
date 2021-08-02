@@ -801,6 +801,12 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     Penalty +=
         Style.PenaltyIndentedWhitespace * (State.Column - State.FirstIndent);
 
+  // Fix a bug where opeands of a for statement are aligned with the for parenthese,
+  // instead of being indented. Possibly there should be an option to control this.
+  if (State.Line->startsWith(tok::kw_for) && PreviousNonComment &&
+      PreviousNonComment->is(tok::semi))
+    State.Column -= State.Column % 4;
+
   // Indent nested blocks relative to this column, unless in a very specific
   // JavaScript special case where:
   //
