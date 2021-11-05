@@ -107,3 +107,66 @@ Consult the
 page for detailed information on configuring and compiling LLVM. You can visit
 [Directory Layout](https://llvm.org/docs/GettingStarted.html#directory-layout)
 to learn about the layout of the source code tree.
+
+## Debugging clang-format with vscode
+
+### Install and make clang-format
+1. Prerequisite
+    * ``cmake``
+    * ``gdb``
+
+2. Clone llvm-project
+    * ``git clone https://github.com/llvm/llvm-project.git``
+    * ``cd llvm-project``
+
+3. Create a `debug` directory and build clang-format in debug mode 
+    * ``mkdir debug``
+    * ``cd debug``
+
+4. Now build clang-format
+    * ``cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_ENABLE_PROJECTS=clang -G "Unix Makefiles" ../llvm``
+    * ``make -j 5 clang-format``
+
+### Setup vscode
+
+1. Open the llvm-project directory in vscode and then click on ``Run and Debug`` then click on ``create a launch.json file``.
+
+![create_launch_json](https://user-images.githubusercontent.com/41117419/140527943-e7640023-309b-4b78-ae88-1459dbe87be6.png)
+
+2. Add following content in launch.json
+    ```json
+    {
+
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "g++ - Build and debug active file",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "<path_to_llvm-project>/llvm-project/debug/bin/clang-format",
+            "args": ["-style=haiku", "-i","test.cpp"],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "C/C++: g++ build active file",
+            "miDebuggerPath": "/usr/bin/gdb"
+        }
+      ]
+    }
+    ```
+
+### All set!
+Now you can use debugger.
+
+Preview:
+
+https://user-images.githubusercontent.com/41117419/140548279-7973363c-0eef-4fa8-9544-7a3345ddaffd.mp4
